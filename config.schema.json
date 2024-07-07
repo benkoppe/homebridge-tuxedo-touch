@@ -9,7 +9,32 @@
         "title": "Name",
         "type": "string",
         "required": true,
-        "default": "Example Dynamic Platform"
+        "default": "Tuxedo Touch Plugin"
+      },
+      "tuxedo_ip": {
+        "title": "Tuxedo IP Address",
+        "type": "string",
+        "required": true
+      },
+      "tuxedo_port": {
+        "title": "Tuxedo Port",
+        "type": "integer",
+        "required": false
+      },
+      "tuxedo_private_key": {
+        "title": "Tuxedo Private Key",
+        "type": "string",
+        "required": true
+      },
+      "tuxedo_code": {
+        "title": "Tuxedo Code",
+        "type": "string",
+        "required": true
+      },
+      "device_mac": {
+        "title": "Device MAC Address",
+        "type": "string",
+        "required": true
       }
     }
   }
