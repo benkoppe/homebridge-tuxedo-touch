@@ -24,7 +24,6 @@
     "no-non-null-assertion": ["off"],
     "comma-spacing": ["error"],
     "no-multi-spaces": ["warn", { "ignoreEOLComments": true }],
-    "no-trailing-spaces": ["warn"],
     "lines-between-class-members": [
       "warn",
       "always",
