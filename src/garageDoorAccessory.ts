@@ -53,6 +53,17 @@ export class TuxedoGarageDoorAccessory {
         this.service
             .getCharacteristic(this.platform.Characteristic.ObstructionDetected)
             .onGet(this.handleGarageDoorObstructionDetectedGet.bind(this));
+
+        // register handlers for the Garage Door Current State Characteristic
+        this.service
+            .getCharacteristic(this.platform.Characteristic.CurrentDoorState)
+            .onGet(this.handleGarageDoorCurrentStateGet.bind(this));
+
+        // register handlers for the Garage Door Target State Characteristic
+        this.service
+            .getCharacteristic(this.platform.Characteristic.TargetDoorState)
+            .onSet(this.handleGarageDoorTargetStateSet.bind(this))
+            .onGet(this.handleGarageDoorTargetStateGet.bind(this));
     }
 
     async handleGarageDoorObstructionDetectedGet() {
@@ -70,7 +81,7 @@ export class TuxedoGarageDoorAccessory {
             case DoorState.CLOSED:
                 return this.platform.Characteristic.CurrentDoorState.CLOSED;
             default:
-                return new Error("Unexpected door state: " + doorState);
+                throw new Error("Unexpected door state: " + doorState);
         }
     }
 
@@ -87,7 +98,7 @@ export class TuxedoGarageDoorAccessory {
             case DoorState.CLOSED:
                 return this.platform.Characteristic.TargetDoorState.CLOSED;
             default:
-                return new Error("Unexpected door state: " + doorState);
+                throw new Error("Unexpected door state: " + doorState);
         }
     }
 
