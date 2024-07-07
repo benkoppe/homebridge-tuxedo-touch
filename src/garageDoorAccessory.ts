@@ -62,6 +62,8 @@ export class TuxedoGarageDoorAccessory {
     async handleGarageDoorCurrentStateGet() {
         const doorState = await this.getDoorState();
 
+        this.platform.log.debug("Current door state: " + doorState);
+
         switch (doorState) {
             case DoorState.OPEN:
                 return this.platform.Characteristic.CurrentDoorState.OPEN;
