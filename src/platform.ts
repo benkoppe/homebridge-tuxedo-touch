@@ -208,10 +208,13 @@ export class TuxedoHomebridgePlatform implements DynamicPlatformPlugin {
             operation: "set",
         });
 
+        this.log.debug("Tuxedo device list:", deviceList);
+
+        const zWaveDevices = deviceList["Zwave"];
         const loadedDevices: Device[] = [];
 
         try {
-            const garageDoors = deviceList["GarageDoor"];
+            const garageDoors = zWaveDevices["GarageDoor"];
             if (garageDoors.length > 0) {
                 for (const garageDoor of garageDoors) {
                     const nodeID = garageDoor["NodeID"];
