@@ -11,9 +11,27 @@ import {
 import { PLATFORM_NAME, PLUGIN_NAME } from "./settings.js";
 
 import { TuxedoSecuritySystemAccessory } from "./securitySystemAccessory.js";
+import { TuxedoGarageDoorAccessory } from "./garageDoorAccessory.js";
 
 import { AccessoryType } from "./accessoryTypes.js";
-import { type TuxedoConfig } from "./tuxedo/api.js";
+import { tuxedoFetch, type TuxedoConfig } from "./tuxedo/api.js";
+
+/**
+ * Define device type, to be converted into accessory instances
+ */
+
+// type for devices that will only have one instance max
+type UniqueDevice = {
+    displayName: string;
+    type: AccessoryType;
+};
+
+// type for devices that can have multiple instances
+type RepeatableDevice = UniqueDevice & {
+    nodeID: number;
+};
+
+type Device = UniqueDevice | RepeatableDevice;
 
 /**
  * HomebridgePlatform
@@ -71,31 +89,29 @@ export class TuxedoHomebridgePlatform implements DynamicPlatformPlugin {
      * Accessories must only be registered once, previously created accessories
      * must not be registered again to prevent "duplicate UUID" errors.
      */
-    discoverDevices() {
-        // Define device type
-        type Device = {
-            id: string;
-            displayName: string;
-            type: AccessoryType;
-        };
-
+    async discoverDevices() {
         // Device discovery always includes the alarm panel. Add it first.
         const devices: Device[] = [
             {
-                id: "alarm-panel",
                 displayName: "Alarm Panel",
                 type: AccessoryType.AlarmPanel,
             },
         ];
 
-        // add other devices from the API (like garage door) later
+        // add other devices from the API (like garage door)
+        devices.push(...(await this.loadDevices()));
 
         // loop over the discovered devices and register each one if it has not already been registered
         for (const device of devices) {
             // generate a unique id for the accessory this should be generated from
             // something globally unique, but constant, for example, the device serial
             // number or MAC address
-            const uuid = this.api.hap.uuid.generate(device.id);
+            let deviceID = device.type.toString();
+            if ("nodeID" in device) {
+                deviceID += `-${device.nodeID}`;
+            }
+
+            const uuid = this.api.hap.uuid.generate(deviceID);
 
             // see if an accessory with the same uuid has already been registered and restored from
             // the cached devices we stored in the `configureAccessory` method above
@@ -116,7 +132,24 @@ export class TuxedoHomebridgePlatform implements DynamicPlatformPlugin {
 
                 // create the accessory handler for the restored accessory
                 // this is imported from `platformAccessory.ts`
-                new TuxedoSecuritySystemAccessory(this, existingAccessory);
+                switch (device.type) {
+                    case AccessoryType.AlarmPanel:
+                        new TuxedoSecuritySystemAccessory(
+                            this,
+                            existingAccessory,
+                        );
+                        break;
+                    case AccessoryType.GarageDoor:
+                        if ("nodeID" in device) {
+                            // Add type guard to check if 'nodeID' property exists
+                            new TuxedoGarageDoorAccessory(
+                                this,
+                                existingAccessory,
+                                device.nodeID,
+                            );
+                        }
+                        break;
+                }
 
                 // it is possible to remove platform accessories at any time using `api.unregisterPlatformAccessories`, e.g.:
                 // remove platform accessories when no longer present
@@ -138,7 +171,21 @@ export class TuxedoHomebridgePlatform implements DynamicPlatformPlugin {
 
                 // create the accessory handler for the newly create accessory
                 // this is imported from `platformAccessory.ts`
-                new TuxedoSecuritySystemAccessory(this, accessory);
+                switch (device.type) {
+                    case AccessoryType.AlarmPanel:
+                        new TuxedoSecuritySystemAccessory(this, accessory);
+                        break;
+                    case AccessoryType.GarageDoor:
+                        if ("nodeID" in device) {
+                            // Add type guard to check if 'nodeID' property exists
+                            new TuxedoGarageDoorAccessory(
+                                this,
+                                accessory,
+                                device.nodeID,
+                            );
+                        }
+                        break;
+                }
 
                 // link the accessory to your platform
                 this.api.registerPlatformAccessories(
@@ -148,5 +195,41 @@ export class TuxedoHomebridgePlatform implements DynamicPlatformPlugin {
                 );
             }
         }
+    }
+
+    /**
+     * Loads devices from the GetDeviceList Tuxedo route
+     *
+     * Currently only loads garage doors.
+     */
+    async loadDevices() {
+        const deviceList = await tuxedoFetch(this.config, "GetDeviceList", {
+            category: "All",
+            operation: "set",
+        });
+
+        const loadedDevices: Device[] = [];
+
+        try {
+            const garageDoors = deviceList["GarageDoor"];
+            if (garageDoors.length > 0) {
+                for (const garageDoor of garageDoors) {
+                    const nodeID = garageDoor["NodeID"];
+
+                    const device: RepeatableDevice = {
+                        displayName: garageDoor["Name"],
+                        type: AccessoryType.GarageDoor,
+                        nodeID: parseInt(nodeID),
+                    };
+
+                    loadedDevices.push(device);
+                }
+            }
+            this.log.info("Loaded devices:", loadedDevices);
+        } catch (error) {
+            this.log.error("Error loading devices:", error);
+        }
+
+        return loadedDevices;
     }
 }
