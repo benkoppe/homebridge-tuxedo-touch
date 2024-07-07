@@ -126,6 +126,7 @@ export class TuxedoGarageDoorAccessory {
             "GetGarageDoorStatus",
             {
                 nodeID: this.nodeID.toString(),
+                operation: "set",
             },
         );
 
