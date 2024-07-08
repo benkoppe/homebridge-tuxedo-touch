@@ -121,6 +121,8 @@ export class TuxedoGarageDoorAccessory {
         this.tempTargetState = undefined;
     }
 
+    // Tuxedo API calls
+
     async getDoorState(): Promise<DoorState> {
         this.platform.log.debug("Querying door state...");
 
