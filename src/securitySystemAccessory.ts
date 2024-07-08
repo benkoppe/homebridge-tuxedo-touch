@@ -44,6 +44,11 @@ export class TuxedoSecuritySystemAccessory {
             accessory.context.device.displayName,
         );
 
+        // register handlers for the Status Fault Characteristic
+        this.service
+            .getCharacteristic(this.platform.Characteristic.StatusFault)
+            .onGet(this.handleStatusFaultGet.bind(this));
+
         // register handlers for the Security System State Characteristic
         this.service
             .getCharacteristic(
@@ -58,6 +63,24 @@ export class TuxedoSecuritySystemAccessory {
             )
             .onSet(this.handleSecuritySystemTargetStateSet.bind(this))
             .onGet(this.handleSecuritySystemTargetStateGet.bind(this));
+    }
+
+    async handleStatusFaultGet() {
+        this.platform.log.debug("Get Security System Fault Status");
+
+        const securityState = await this.getSecurityState();
+
+        switch (securityState) {
+            case TuxedoSecurityType.ArmedStayFault:
+            case TuxedoSecurityType.ArmedAwayFault:
+            case TuxedoSecurityType.ArmedNightFault:
+            case TuxedoSecurityType.ArmedInstantFault:
+            case TuxedoSecurityType.ReadyFault:
+            case TuxedoSecurityType.NotReadyFault:
+                return this.platform.Characteristic.StatusFault.GENERAL_FAULT;
+            default:
+                return this.platform.Characteristic.StatusFault.NO_FAULT;
+        }
     }
 
     async handleSecuritySystemTargetStateGet() {
