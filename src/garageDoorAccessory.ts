@@ -15,7 +15,9 @@ enum DoorState {
 export class TuxedoGarageDoorAccessory {
     private service: Service;
 
+    // device node id
     private nodeID: number;
+    // temp target state to handle door state changes
     private tempTargetState: CharacteristicValue | undefined = undefined;
 
     constructor(
@@ -66,6 +68,7 @@ export class TuxedoGarageDoorAccessory {
             .onGet(this.handleGarageDoorTargetStateGet.bind(this));
     }
 
+    // tuxedo doesn't support obstruction detection, so always return false
     async handleGarageDoorObstructionDetectedGet() {
         return false;
     }
