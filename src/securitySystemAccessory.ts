@@ -14,6 +14,7 @@ import {
 export class TuxedoSecuritySystemAccessory {
     private service: Service;
 
+    // temp target state to handle state changes
     private tempTargetState: CharacteristicValue | undefined = undefined;
 
     constructor(
@@ -59,76 +60,6 @@ export class TuxedoSecuritySystemAccessory {
             .onGet(this.handleSecuritySystemTargetStateGet.bind(this));
     }
 
-    /**
-     * Handle SET requests from HomeKit
-     * This is sent when the user changes the state of the system.
-     */
-    async handleSecuritySystemTargetStateSet(value: CharacteristicValue) {
-        this.platform.log.debug("Set Security System State: " + value);
-
-        this.tempTargetState = value;
-
-        try {
-            switch (value) {
-                case this.platform.Characteristic.SecuritySystemTargetState
-                    .STAY_ARM:
-                    await this.setArmedState("stay");
-                    break;
-                case this.platform.Characteristic.SecuritySystemTargetState
-                    .AWAY_ARM:
-                    await this.setArmedState("away");
-                    break;
-                case this.platform.Characteristic.SecuritySystemTargetState
-                    .NIGHT_ARM:
-                    await this.setArmedState("night");
-                    break;
-                case this.platform.Characteristic.SecuritySystemTargetState
-                    .DISARM:
-                    await this.setDisarmedState();
-                    break;
-            }
-        } catch (error) {
-            this.platform.log.error(
-                "Error setting security system state: " + error,
-            );
-        }
-
-        this.tempTargetState = undefined;
-    }
-
-    async setArmedState(targetState: "away" | "stay" | "night") {
-        const arming = targetState.toUpperCase();
-        const partition = 1;
-
-        return await tuxedoFetch(
-            this.platform.config,
-            "AdvancedSecurity/ArmWithCode",
-            {
-                arming,
-                pID: partition.toString(),
-                ucode: this.platform.config.tuxedo_code,
-                operation: "set",
-            },
-        );
-    }
-
-    async setDisarmedState() {
-        const partition = 1;
-
-        return await tuxedoFetch(
-            this.platform.config,
-            "AdvancedSecurity/DisarmWithCode",
-            {
-                pID: partition.toString(),
-                ucode: this.platform.config.tuxedo_code,
-                operation: "set",
-            },
-        );
-    }
-
-    /**
-     * Handle GET requests from HomeKit
-     */
     async handleSecuritySystemTargetStateGet() {
         this.platform.log.debug("Get Security System Target State");
 
@@ -140,7 +71,7 @@ export class TuxedoSecuritySystemAccessory {
             return this.tempTargetState;
         }
 
-        const securityState = await this.getTuxedoSecurityState();
+        const securityState = await this.getSecurityState();
 
         switch (securityState) {
             case TuxedoSecurityType.ArmedStay:
@@ -176,7 +107,7 @@ export class TuxedoSecuritySystemAccessory {
     async handleSecuritySystemCurrentStateGet() {
         this.platform.log.debug("Get Security System Current State");
 
-        const securityState = await this.getTuxedoSecurityState();
+        const securityState = await this.getSecurityState();
 
         switch (securityState) {
             case TuxedoSecurityType.ArmedStay:
@@ -211,7 +142,72 @@ export class TuxedoSecuritySystemAccessory {
         }
     }
 
-    async getTuxedoSecurityState(): Promise<TuxedoSecurityType> {
+    async handleSecuritySystemTargetStateSet(value: CharacteristicValue) {
+        this.platform.log.debug("Set Security System State: " + value);
+
+        this.tempTargetState = value;
+
+        try {
+            switch (value) {
+                case this.platform.Characteristic.SecuritySystemTargetState
+                    .STAY_ARM:
+                    await this.setArmedState("stay");
+                    break;
+                case this.platform.Characteristic.SecuritySystemTargetState
+                    .AWAY_ARM:
+                    await this.setArmedState("away");
+                    break;
+                case this.platform.Characteristic.SecuritySystemTargetState
+                    .NIGHT_ARM:
+                    await this.setArmedState("night");
+                    break;
+                case this.platform.Characteristic.SecuritySystemTargetState
+                    .DISARM:
+                    await this.setDisarmedState();
+                    break;
+            }
+        } catch (error) {
+            this.platform.log.error(
+                "Error setting security system state: " + error,
+            );
+        }
+
+        this.tempTargetState = undefined;
+    }
+
+    // Tuxedo API calls
+
+    async setArmedState(targetState: "away" | "stay" | "night") {
+        const arming = targetState.toUpperCase();
+        const partition = 1;
+
+        return await tuxedoFetch(
+            this.platform.config,
+            "AdvancedSecurity/ArmWithCode",
+            {
+                arming,
+                pID: partition.toString(),
+                ucode: this.platform.config.tuxedo_code,
+                operation: "set",
+            },
+        );
+    }
+
+    async setDisarmedState() {
+        const partition = 1;
+
+        return await tuxedoFetch(
+            this.platform.config,
+            "AdvancedSecurity/DisarmWithCode",
+            {
+                pID: partition.toString(),
+                ucode: this.platform.config.tuxedo_code,
+                operation: "set",
+            },
+        );
+    }
+
+    async getSecurityState(): Promise<TuxedoSecurityType> {
         this.platform.log.debug("Get Tuxedo Security State");
 
         const securityState = await tuxedoFetch(
