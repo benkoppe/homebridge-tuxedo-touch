@@ -2,12 +2,17 @@ import { chromium, Browser, Page, BrowserContext } from "playwright";
 import { parse, type HTMLElement } from "node-html-parser";
 
 import path from "path";
+import { fileURLToPath } from "url";
 import fs from "fs";
 import { setTimeout } from "timers/promises";
 
 import { Logging } from "homebridge";
 
 import type { TuxedoConfig } from "./config";
+
+// file path constants
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // static web portal constants
 const PORTAL_CONSTANTS = {
