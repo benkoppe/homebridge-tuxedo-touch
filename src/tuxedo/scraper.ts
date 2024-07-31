@@ -1,4 +1,4 @@
-import { chromium, Browser, Page, BrowserContext } from "playwright";
+import { firefox, Browser, Page, BrowserContext } from "playwright";
 import { parse, type HTMLElement } from "node-html-parser";
 
 import path from "path";
@@ -73,7 +73,7 @@ export class TuxedoScraper {
     }
 
     async init() {
-        this.browser = await chromium.launch({ headless: true });
+        this.browser = await firefox.launch({ headless: true });
         this.context = await this.browser.newContext({
             ignoreHTTPSErrors: true,
         });
