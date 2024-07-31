@@ -15,15 +15,13 @@ enum DoorState {
 export class TuxedoGarageDoorAccessory {
     private service: Service;
 
-    // device node id
-    private nodeID: number;
     // temp target state to handle door state changes
     private tempTargetState: CharacteristicValue | undefined = undefined;
 
     constructor(
         private readonly platform: TuxedoHomebridgePlatform,
         private readonly accessory: PlatformAccessory,
-        nodeID: number,
+        private readonly nodeId: number,
     ) {
         // set accessory information
         this.accessory
@@ -47,9 +45,6 @@ export class TuxedoGarageDoorAccessory {
             this.platform.Characteristic.Name,
             accessory.context.device.displayName,
         );
-
-        // set the node ID
-        this.nodeID = nodeID;
 
         // register handlers for the Garage Door Obstruction Detected Characteristic
         this.service
@@ -130,7 +125,7 @@ export class TuxedoGarageDoorAccessory {
             this.platform.config,
             "GetGarageDoorStatus",
             {
-                nodeID: this.nodeID.toString(),
+                nodeID: this.nodeId.toString(),
                 operation: "set",
             },
         );
@@ -154,7 +149,7 @@ export class TuxedoGarageDoorAccessory {
         const action = targetState === DoorState.CLOSED ? "Close" : "Open";
 
         await tuxedoFetch(this.platform.config, "SetGarageDoorStatus", {
-            nodeID: this.nodeID.toString(),
+            nodeID: this.nodeId.toString(),
             cntrl: action,
             operation: "set",
         });

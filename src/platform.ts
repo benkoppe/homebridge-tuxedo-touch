@@ -14,7 +14,10 @@ import { TuxedoSecuritySystemAccessory } from "./securitySystemAccessory.js";
 import { TuxedoGarageDoorAccessory } from "./garageDoorAccessory.js";
 
 import { AccessoryType } from "./accessoryTypes.js";
-import { tuxedoFetch, type TuxedoConfig } from "./tuxedo/api.js";
+import type { TuxedoConfig } from "./tuxedo/config.js";
+import { tuxedoFetch } from "./tuxedo/api.js";
+import { TuxedoScraper, type LightType } from "./tuxedo/scraper.js";
+import { TuxedoLightbulbAccessory } from "./lightbulbAccessory.js";
 
 /**
  * Define device type, to be converted into accessory instances
@@ -24,6 +27,7 @@ import { tuxedoFetch, type TuxedoConfig } from "./tuxedo/api.js";
 type UniqueDevice = {
     displayName: string;
     type: AccessoryType;
+    extras?: unknown; // extra data that may be needed for the accessory
 };
 
 // type for devices that can have multiple instances
@@ -42,6 +46,9 @@ export class TuxedoHomebridgePlatform implements DynamicPlatformPlugin {
     public readonly Service: typeof Service;
     public readonly Characteristic: typeof Characteristic;
 
+    // scraper instance for the Tuxedo Touch web interface
+    public readonly tuxedoScraper: TuxedoScraper;
+
     // this is used to track restored cached accessories
     public readonly accessories: PlatformAccessory[] = [];
 
@@ -52,6 +59,8 @@ export class TuxedoHomebridgePlatform implements DynamicPlatformPlugin {
     ) {
         this.Service = api.hap.Service;
         this.Characteristic = api.hap.Characteristic;
+
+        this.tuxedoScraper = new TuxedoScraper(this.config, this.log);
 
         this.log.debug("Finished initializing platform:", this.config.name);
 
@@ -149,6 +158,16 @@ export class TuxedoHomebridgePlatform implements DynamicPlatformPlugin {
                             );
                         }
                         break;
+                    case AccessoryType.Lightbulb:
+                        if ("nodeID" in device && "extras" in device) {
+                            new TuxedoLightbulbAccessory(
+                                this,
+                                existingAccessory,
+                                device.nodeID,
+                                device.extras as LightType,
+                            );
+                        }
+                        break;
                 }
 
                 // it is possible to remove platform accessories at any time using `api.unregisterPlatformAccessories`, e.g.:
@@ -185,6 +204,16 @@ export class TuxedoHomebridgePlatform implements DynamicPlatformPlugin {
                             );
                         }
                         break;
+                    case AccessoryType.Lightbulb:
+                        if ("nodeID" in device && "extras" in device) {
+                            new TuxedoLightbulbAccessory(
+                                this,
+                                accessory,
+                                device.nodeID,
+                                device.extras as LightType,
+                            );
+                        }
+                        break;
                 }
 
                 // link the accessory to your platform
@@ -203,6 +232,7 @@ export class TuxedoHomebridgePlatform implements DynamicPlatformPlugin {
      * Currently only loads garage doors.
      */
     async loadDevices() {
+        // first, load devices from the API
         const deviceList = await tuxedoFetch(this.config, "GetDeviceList", {
             category: "All",
             operation: "set",
@@ -231,6 +261,22 @@ export class TuxedoHomebridgePlatform implements DynamicPlatformPlugin {
             this.log.info("Loaded devices:", loadedDevices);
         } catch (error) {
             this.log.error("Error loading devices:", error);
+        }
+
+        // then, load devices from the scraper.
+        await this.tuxedoScraper.init();
+
+        const lights = await this.tuxedoScraper.getLightList();
+
+        for (const light of lights) {
+            const device: RepeatableDevice = {
+                displayName: light.name,
+                type: AccessoryType.Lightbulb,
+                nodeID: light.nodeId,
+                extras: light.type,
+            };
+
+            loadedDevices.push(device);
         }
 
         return loadedDevices;

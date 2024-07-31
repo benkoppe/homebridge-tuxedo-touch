@@ -28,6 +28,7 @@
     "homebridge-plugin"
   ],
   "devDependencies": {
+    "@playwright/test": "^1.45.3",
     "@types/node": "^20.12.13",
     "@types/uuid": "^10.0.0",
     "@typescript-eslint/eslint-plugin": "^7.11.0",
@@ -40,6 +41,8 @@
     "typescript": "^5.4.5"
   },
   "dependencies": {
+    "node-html-parser": "^6.1.13",
+    "tsx": "^4.16.2",
     "undici": "^6.19.2",
     "uuid": "^10.0.0"
   }

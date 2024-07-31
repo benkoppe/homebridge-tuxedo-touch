@@ -35,6 +35,16 @@
                 "title": "Device MAC Address",
                 "type": "string",
                 "required": true
+            },
+            "scraper_username": {
+                "title": "Web Portal Username",
+                "type": "string",
+                "required": true
+            },
+            "scraper_password": {
+                "title": "Web Portal Password",
+                "type": "string",
+                "required": true
             }
         }
     }
