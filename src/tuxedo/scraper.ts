@@ -1,5 +1,7 @@
 import { chromium, Browser, Page, BrowserContext } from "playwright";
 import { parse, type HTMLElement } from "node-html-parser";
+
+import path from "path";
 import fs from "fs";
 import { setTimeout } from "timers/promises";
 
@@ -12,7 +14,8 @@ const PORTAL_CONSTANTS = {
     LOGIN_URL: "authenticated/index.html?url=zwavedevicelist.html",
     PROTECTED_URL: "zwavedevicelist.html",
 };
-const COOKIE_FILE_PATH = "static/cookies.json";
+const PROJECT_ROOT = path.resolve(__dirname, "..", "..");
+const COOKIE_FILE_PATH = path.resolve(PROJECT_ROOT, "static", "cookies.json");
 
 // relate light types to their respective button container classes
 const LIGHT_TYPE_BUTTON_CONTAINER_CLASSES = {
@@ -53,7 +56,7 @@ export class TuxedoScraper {
         this.protectedUrl = this.getFullPath(PORTAL_CONSTANTS.PROTECTED_URL);
     }
 
-    getFullPath(path: string) {
+    private getFullPath(path: string) {
         let fullPath = `https://${this.config.tuxedo_ip}`;
         if (this.config.tuxedo_port) {
             fullPath += `:${this.config.tuxedo_port}`;
@@ -133,6 +136,7 @@ export class TuxedoScraper {
 
     async close() {
         if (this.browser) {
+            await this.page?.goto(this.getFullPath("logout.html"));
             await this.browser.close();
         }
     }
