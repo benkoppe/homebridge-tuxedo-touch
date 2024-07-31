@@ -95,7 +95,9 @@ export class TuxedoScraper {
             await this.page.fill("#j_password", this.config.scraper_password);
             await this.page.click("#login_confirm");
 
-            await this.page.waitForURL(this.protectedUrl);
+            await this.page.waitForURL(this.protectedUrl, {
+                timeout: undefined,
+            });
 
             if (this.context) {
                 const cookies = await this.context.cookies();
