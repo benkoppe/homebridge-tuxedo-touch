@@ -49,6 +49,8 @@ export class TuxedoScraper {
     private page: Page | null = null;
     private context: BrowserContext | null = null;
 
+    private stale: boolean = false;
+
     private readonly loginUrl: string;
     private readonly protectedUrl: string;
     private readonly cookieFilePath: string = COOKIE_FILE_PATH;
@@ -146,12 +148,12 @@ export class TuxedoScraper {
         }
     }
 
-    private async goto(fullPath: string) {
+    private async goto(fullPath: string, forceReload: boolean = false) {
         if (!this.page) {
             return;
         }
 
-        if (this.page.url() === fullPath) {
+        if (this.page.url() === fullPath && !forceReload) {
             return;
         }
 
@@ -159,7 +161,7 @@ export class TuxedoScraper {
     }
 
     private async gotoDeviceList(type: "load" | "load_fully" = "load") {
-        await this.goto(this.protectedUrl);
+        await this.goto(this.protectedUrl, this.stale);
 
         if (type === "load_fully") {
             await this.waitForDeviceListUploadTextToDisappear();
@@ -425,6 +427,6 @@ export class TuxedoScraper {
     private async refreshData() {
         await this.gotoDeviceList();
         await setTimeout(3 * 1000);
-        await this.page?.reload();
+        this.stale = true;
     }
 }
