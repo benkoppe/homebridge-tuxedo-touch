@@ -2,7 +2,7 @@
 dist
 
 # Ignore static files
-static/*
+static
 
 # ------------- Defaults ------------- #
 
