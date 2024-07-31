@@ -50,6 +50,7 @@ export class TuxedoScraper {
     private context: BrowserContext | null = null;
 
     private stale: boolean = false;
+    private navigating: boolean = false;
 
     private readonly loginUrl: string;
     private readonly protectedUrl: string;
@@ -157,7 +158,13 @@ export class TuxedoScraper {
             return;
         }
 
+        if (this.navigating) {
+            return;
+        }
+
+        this.navigating = true;
         await this.page.goto(fullPath);
+        this.navigating = false;
     }
 
     private async gotoDeviceList(type: "load" | "load_fully" = "load") {
