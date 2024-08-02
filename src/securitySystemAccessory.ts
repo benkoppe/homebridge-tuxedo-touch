@@ -139,6 +139,7 @@ export class TuxedoSecuritySystemAccessory {
                     .STAY_ARM;
             case TuxedoSecurityType.ArmedAway:
             case TuxedoSecurityType.ArmedAwayFault:
+            case TuxedoSecurityType.EntryDelayActive:
                 return this.platform.Characteristic.SecuritySystemCurrentState
                     .AWAY_ARM;
             case TuxedoSecurityType.ArmedNight:
@@ -153,7 +154,6 @@ export class TuxedoSecuritySystemAccessory {
             case TuxedoSecurityType.NotReadyFault:
                 return this.platform.Characteristic.SecuritySystemCurrentState
                     .DISARMED;
-            case TuxedoSecurityType.EntryDelayActive:
             case TuxedoSecurityType.NotReadyAlarm:
             case TuxedoSecurityType.ArmedStayAlarm:
             case TuxedoSecurityType.ArmedNightAlarm:
